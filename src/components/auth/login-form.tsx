@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -22,6 +23,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { ShieldCheck } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
@@ -29,6 +31,8 @@ const formSchema = z.object({
 });
 
 export function LoginForm() {
+  const router = useRouter();
+  const { toast } = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -38,11 +42,25 @@ export function LoginForm() {
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    // TODO: Implement login logic
-    console.log(values);
-    // On successful login, redirect to dashboard
-    // window.location.href = '/dashboard';
+    if (values.email === 'admin@example.com' && values.password === 'password') {
+      router.push('/dashboard');
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Login Failed',
+        description: 'Invalid email or password.',
+      });
+    }
   }
+
+  const handleDemoLogin = async () => {
+    form.setValue('email', 'admin@example.com');
+    form.setValue('password', 'password');
+    const isValid = await form.trigger();
+    if (isValid) {
+      onSubmit(form.getValues());
+    }
+  };
 
   return (
     <Card className="w-full max-w-md">
@@ -55,7 +73,7 @@ export function LoginForm() {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="email"
@@ -87,7 +105,12 @@ export function LoginForm() {
                 </FormItem>
               )}
             />
-            <Button type="submit" className="w-full font-bold">Login</Button>
+            <div className="space-y-2 pt-2">
+                <Button type="submit" className="w-full font-bold">Login</Button>
+                <Button type="button" variant="secondary" className="w-full font-bold" onClick={handleDemoLogin}>
+                    Login as Demo Admin
+                </Button>
+            </div>
           </form>
         </Form>
         <div className="mt-4 text-center text-sm">
